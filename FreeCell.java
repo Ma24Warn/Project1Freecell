@@ -44,7 +44,7 @@ public class FreeCell
         m.toString();
 
         //THIS NEEDS TO CALL THE BELOW METHOD AND PRINT IT I THINK. WHAT DOES ABOVE DO?
-
+        
 
 
     }
@@ -52,7 +52,7 @@ public class FreeCell
     public static ArrayList<Action> solve(GameState gs) {
         ArrayList<Action> moves = new ArrayList<>();
 
-        moves = GameState.aStarSearch(gs);
+        moves = gs.aStarSearch(gs);
 
         //I THINK THE A* WILL SEND ME THE ARRAYLIST? I JUST RETURN THAT AGAIN?
 

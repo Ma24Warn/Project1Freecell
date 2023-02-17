@@ -1,8 +1,8 @@
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.PriorityQueue;
 import java.io.File;
 import java.util.Scanner;
+import java.util.TreeMap;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.FileWriter;
@@ -20,7 +20,8 @@ public class GameState
     private int numCellsFree;
     private ArrayList<ArrayList<Card>> tableau; // In actions, numbered 1-8; we adjust the -1 manually.
     private int[] foundations = {0,0,0,0,0}; // We'll ignore the first one.
-    private ArrayList<Action> actions; //ArrayList to keep track of actions
+    private ArrayList<Action> actions = new ArrayList<>(); //ArrayList to keep track of actions
+    private TreeMap<Integer, GameState> PQ = new TreeMap<Integer, GameState>();
 
     /**
      * Creates a random deal
@@ -149,10 +150,14 @@ public class GameState
         }
         else {
             pile = tableau.get(d-1);
-            Card last = pile.get(pile.size()-1);
-            return (last.getRank() == c.getRank() + 1) && (!last.sameColor(c));
+            //IF STATEMENT FROM ME --------------------------------------------------------------------
+            if (pile.size() > 0) {
+                Card last = pile.get(pile.size()-1);
+                return (last.getRank() == c.getRank() + 1) && (!last.sameColor(c));
+            }
         }
-        //return false;
+        //I UNCOMMENTED THIS OUT???????????????????????????????????????????????????????????
+        return false;
     }
     
     public ArrayList<Action> getLegalActions() {
@@ -185,10 +190,13 @@ public class GameState
                 for (int s = 0; s < 8; s++) {
                     if (s == d) { continue; }
                     ArrayList<Card> p2 = tableau.get(s);
-                    Card c2 = p2.get(p2.size()-1);
-                    if (!top.sameColor(c2) && (top.getRank() == c2.getRank()+1)) {
-                        result.add(new Action(false,s+1,c2,d+1));
-                    }                    
+                    //IF STATEMENT FROM ME prevents moving from tableau with no cards -----------------------
+                    if (p2.size() > 0) {
+                        Card c2 = p2.get(p2.size()-1);
+                        if (!top.sameColor(c2) && (top.getRank() == c2.getRank()+1)) {
+                            result.add(new Action(false,s+1,c2,d+1));
+                        }    
+                    }                
                 }
             }
             else {  // empty pile - any card can go here
@@ -198,7 +206,10 @@ public class GameState
                 for (int s = 0; s < 8; s++) {
                     if (s == d) { continue; }
                     ArrayList<Card> p2 = tableau.get(s);
-                    result.add(new Action(false,s+1,p2.get(p2.size()-1),d+1));
+                    //IF STATEMENT FROM ME ------------------------------------------------------------------
+                    if (p2.size() > 0) {
+                        result.add(new Action(false,s+1,p2.get(p2.size()-1),d+1));
+                    }
                 }
             }
         }
@@ -229,7 +240,8 @@ public class GameState
         GameState result = new GameState(this);
         if (!result.executeAction(a)) { return null; }
 
-
+        //System.out.println(a);
+        //System.out.println(actions);
         //IMPLEMENT ACTION ARRAYLIST
         actions.add(a); //IS THIS CORRECT??????????????????????????????????????????????????????????
 
@@ -237,13 +249,12 @@ public class GameState
         return result;
     }
     
-    //does this check all of the actions in the list execute them, if they all work
-    //then the final state is returned????? or does it just test the actions??
+    //this goes through the actions array and sees if it can get to the desired goal state
     public GameState resultState(ArrayList<Action> Alist) {
         GameState result = new GameState(this);
         for (Action a : Alist) {
             if (!result.executeAction(a)) { return null; }
-            actions.add(a); //IS THIS CORRECT?????
+            //actions.add(a); //IS THIS CORRECT?????
         }
 
 
@@ -347,19 +358,41 @@ public class GameState
 
 
     //heuristic
-     
+    //we are guessing how many moves are left until foundations are full/tableau and cells are empty
+    //for every empty cell, one less move to win???
+    //the more the foundation is full, better heuristic since we wont take from foundation
+    //need to account for higher rank cards being on other higher rank cards
     public int h(GameState gs) {
         int heuristic = 0;
-        //maybe go through each foundation, the higher amount of cards in the foundations, the
-        //lower the heuristic. We want the lowest heuristic? PQ should sort by that?
 
-        for (int i = 1; i <=4; i++) {
-            heuristic += gs.foundations[i];
+        for (int i = 0; i < 8; i++) {
+            ArrayList<Card> p2 = tableau.get(i);
+            heuristic += p2.size();
         }
 
+
+
+        System.out.println(heuristic);
+
+
+        /* 
+        //maybe go through each foundation, the higher amount of cards in the foundations, the
+        //lower the heuristic. We want the lowest heuristic? PQ should sort by that?
+        System.out.println("new");
+        //gs.display();
+       
+
+        for (int i = 1; i <=4; i++) {
+            //System.out.println(gs.foundations[i]);
+            heuristic += gs.foundations[i];
+        }
         //make smaller number using max possible cards in foundations
         heuristic = 52 - heuristic;
+        System.out.println("heuristic is " + heuristic);
 
+
+        //NEEDS MORE !!!!!!!!!!!!!!!!!
+*/
 
         return heuristic;
     }
@@ -367,24 +400,32 @@ public class GameState
     //A* Search Algorithm
     public ArrayList<Action> aStarSearch(GameState gs) {
         ArrayList<Action> empty = new ArrayList<>();
-        PriorityQueue PQ = new PriorityQueue<>();
-        GameState cur;
-
-        /* 
-        PQ.add(gs, h(gs));
+        GameState cur, next_state;
+        
+        
+        PQ.put(h(gs), gs);
         while (!PQ.isEmpty()) {
-            cur = PQ.remove();
-            if (cur.isWin())
+            cur = PQ.get(PQ.firstKey());
+            if (cur.isWin()) {
                 return actions;
-            for each neighbor of cur_state 
+            }
+            ArrayList<Action> legalActions = new ArrayList<>();
+            legalActions = getLegalActions();
+            //System.out.println("legal actions: " + legalActions.size());
+            for (Action a : legalActions) {
             //for every action of getLegalActions?
             //maybe call nextState for each of those actions?
-                PQ.add(cur_state, steps(cur_state) + h(cur_state));
+                next_state = nextState(a);
+
+                PQ.put(actions.size() + h(next_state), next_state);
+                //PQ.add(next_state, steps(cur_state) + h(next_state));
+                //PQ.add(next_state, h(cur_state) + h(next_state));
                 //steps is the current dijkstras number
                 //"Makes it easier both to count steps for your eval function"
                 //possibly for priorityQueue
+            }
         
-        } */
+        }
         //in theory, this will only return if the if(isWin()) never passes and returns
         return empty;
 
@@ -392,4 +433,6 @@ public class GameState
         
         
     }
+
+
 }
