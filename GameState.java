@@ -21,7 +21,7 @@ public class GameState
     private ArrayList<ArrayList<Card>> tableau; // In actions, numbered 1-8; we adjust the -1 manually.
     private int[] foundations = {0,0,0,0,0}; // We'll ignore the first one.
     private ArrayList<Action> actions = new ArrayList<>(); //ArrayList to keep track of actions
-    private TreeMap<Integer, GameState> PQ = new TreeMap<Integer, GameState>();
+    private TreeMap<Integer, ArrayList<GameState>> PQ = new TreeMap<Integer, ArrayList<GameState>>();
 
     /**
      * Creates a random deal
@@ -139,14 +139,19 @@ public class GameState
         }
         else {
             pile = tableau.get(s-1);
-            c = pile.get(pile.size()-1);
+            //IF ELSE STATEMENT BY ME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if (pile.size() > 0) {
+                c = pile.get(pile.size()-1);//not by me!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            }
+            else {
+                return false;
+            }
         }
         if (!c.equals(a.getCard())) { return false; }    
         int d = a.get_dest_pile();
         if (d == 0 && numCellsFree > 0) { return true; }
         if (d == 9) {
             return c.getRank() == foundations[c.getSuit()] + 1;
-            // is this card the next one for its suit's foundation pile?
         }
         else {
             pile = tableau.get(d-1);
@@ -156,7 +161,7 @@ public class GameState
                 return (last.getRank() == c.getRank() + 1) && (!last.sameColor(c));
             }
         }
-        //I UNCOMMENTED THIS OUT???????????????????????????????????????????????????????????
+        //I UNCOMMENTED THIS OUT----------------------------------------------------------------------------
         return false;
     }
     
@@ -206,7 +211,7 @@ public class GameState
                 for (int s = 0; s < 8; s++) {
                     if (s == d) { continue; }
                     ArrayList<Card> p2 = tableau.get(s);
-                    //IF STATEMENT FROM ME ------------------------------------------------------------------
+                    //IF STATEMENT FROM ME ------------------is this preventing moving from empty to empty??????-----------
                     if (p2.size() > 0) {
                         result.add(new Action(false,s+1,p2.get(p2.size()-1),d+1));
                     }
@@ -243,8 +248,10 @@ public class GameState
         //System.out.println(a);
         //System.out.println(actions);
         //IMPLEMENT ACTION ARRAYLIST
-        actions.add(a); //IS THIS CORRECT??????????????????????????????????????????????????????????
+        //result.executeAction(a);
 
+
+        actions.add(a); //IS THIS CORRECT??????????????????????????????????????????????????????????
 
         return result;
     }
@@ -358,54 +365,102 @@ public class GameState
 
 
     //heuristic
-    //we are guessing how many moves are left until foundations are full/tableau and cells are empty
-    //for every empty cell, one less move to win???
-    //the more the foundation is full, better heuristic since we wont take from foundation
-    //need to account for higher rank cards being on other higher rank cards
     public int h(GameState gs) {
-        int heuristic = 0;
+        int heuristic = 0, count = 0, fSize = 0, rank;
+        ArrayList<Card> curTab;
+        Card curCard;
+        boolean found;
 
-        for (int i = 0; i < 8; i++) {
-            ArrayList<Card> p2 = tableau.get(i);
-            heuristic += p2.size();
+
+        for (int z = 0; z < foundations.length; z++) {
+            //calculate foundation size heuristic? 52-fHeur
+
+            rank = gs.foundations[z];
+            fSize += rank; //used to calculate part of heuristic (amount of cards left to put in foundations)
+            found = false;
+
+            //go through each tableau
+            for (int x = 0; x < 8; x++) {
+
+                //get an ArrayList of the current tableau's cards
+                curTab = gs.tableau.get(x);
+
+                
+                //find the card in the current tableau
+                for (int y = 0; y < curTab.size(); y++) {
+
+                    //get the rank and suit of current card in tableau
+                    curCard = curTab.get(y);
+
+                    //if the current cards rank and suit are equal to the card we are looking for
+                    if (curCard.getRank() == rank && curCard.getSuit() == z) {
+
+                        //get amount of cards remaining (on top of current card) CHECK IF THIS WORKS!!!!!!!!!!!!
+                        count = curTab.size() - y;
+                        heuristic += count;
+                        found = true;
+                        break;
+                    }
+
+
+
+                    
+                }
+
+                //if current foundations next card has been found, break from tableau loop
+                if (found == true) {
+                    break;
+                }
+
+            }
+
         }
 
-
-
-        System.out.println(heuristic);
-
-
-        /* 
-        //maybe go through each foundation, the higher amount of cards in the foundations, the
-        //lower the heuristic. We want the lowest heuristic? PQ should sort by that?
-        System.out.println("new");
-        //gs.display();
-       
-
-        for (int i = 1; i <=4; i++) {
-            //System.out.println(gs.foundations[i]);
-            heuristic += gs.foundations[i];
-        }
-        //make smaller number using max possible cards in foundations
-        heuristic = 52 - heuristic;
-        System.out.println("heuristic is " + heuristic);
-
-
-        //NEEDS MORE !!!!!!!!!!!!!!!!!
-*/
+        //add amount of cards left which need to be added to foundation
+        heuristic += 52-fSize;
+        //heuristic += 4-gs.numCellsFree; //SHOULD THIS BE A PART OF THE HEURISTIC????????????????????????????
 
         return heuristic;
     }
 
+
+
     //A* Search Algorithm
     public ArrayList<Action> aStarSearch(GameState gs) {
         ArrayList<Action> empty = new ArrayList<>();
+        ArrayList<GameState> startState = new ArrayList<>();
         GameState cur, next_state;
+        int numMoves; //Holds the value of djikstras + heuristic (to keep code simpler)
         
+        System.out.println("start state: " + gs);
+        startState.add(gs);
+
+        PQ.put(h(gs), startState);
+
         
-        PQ.put(h(gs), gs);
+
+        System.out.println("size: " + PQ.size());
+
         while (!PQ.isEmpty()) {
-            cur = PQ.get(PQ.firstKey());
+
+            //if the firstkey list is empty, remove it
+            if (PQ.get(PQ.firstKey()).size() < 1) {
+                PQ.remove(PQ.firstKey());
+            }
+
+            //pop gamestate from arraylist in PQ
+            cur = PQ.get(PQ.firstKey()).get(0);
+            PQ.get(PQ.firstKey()).remove(0);
+
+
+
+            //cur = PQ.get(PQ.firstKey());
+
+            //THE INTSTRUCTIONS/PSEUDOCODE DID SAY TO POP OFF THE VALUE!!!
+            //PQ.remove(PQ.firstKey());
+
+            System.out.println("Current state: " + cur);
+
             if (cur.isWin()) {
                 return actions;
             }
@@ -417,14 +472,42 @@ public class GameState
             //maybe call nextState for each of those actions?
                 next_state = nextState(a);
 
-                PQ.put(actions.size() + h(next_state), next_state);
-                //PQ.add(next_state, steps(cur_state) + h(next_state));
-                //PQ.add(next_state, h(cur_state) + h(next_state));
-                //steps is the current dijkstras number
-                //"Makes it easier both to count steps for your eval function"
-                //possibly for priorityQueue
+
+                if (next_state != null) {
+                    System.out.println("action " + a);
+                    System.out.println("next state: " + next_state);
+                    System.out.println("heuristic " + h(next_state));
+                    System.out.println("");
+
+                    numMoves = actions.size() + h(next_state);
+
+                    if (!PQ.containsKey(numMoves)) {
+                        ArrayList<GameState> newAL = new ArrayList<>();
+                        newAL.add(next_state);
+                        PQ.put(numMoves, newAL);
+                    }
+                    else {
+                        PQ.get(numMoves).add(next_state);
+                    }
+                    
+                }
+                
+                //System.out.println("PQ = " + PQ);
+
+
             }
-        
+            System.out.println("legal actions from above: " + legalActions);
+            System.out.println("actions taken so far: " + actions);
+            
+            /* 
+            if (actions.size() > 6) {
+                System.out.println(actions);
+                break;
+            }*/
+
+
+            
+            
         }
         //in theory, this will only return if the if(isWin()) never passes and returns
         return empty;

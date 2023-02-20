@@ -38,10 +38,21 @@ public class FreeCell
         }
         */
 
-        GameState game = new GameState("testCases/case_small_4.txt");
+        GameState game1 = new GameState("testCases/case_small_4.txt");
 
-        m = solve(game);
-        m.toString();
+        GameState game2 = new GameState("testCases/case_easy_56.txt");
+        GameState game3 = new GameState("testCases/case_minimal_52.txt");
+        GameState game4 = new GameState("testCases/case_MS25_102.txt");
+
+        GameState game5 = new GameState("testCases/case_onemove.txt");
+        GameState game6 = new GameState("testCases/testtest.txt");
+
+
+        m = solve(game1);
+
+        System.out.println("Solution: ");
+        System.out.println(m.toString());
+
 
         //THIS NEEDS TO CALL THE BELOW METHOD AND PRINT IT I THINK. WHAT DOES ABOVE DO?
         
