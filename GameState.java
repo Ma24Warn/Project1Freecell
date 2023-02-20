@@ -465,12 +465,12 @@ public class GameState
                 return actions;
             }
             ArrayList<Action> legalActions = new ArrayList<>();
-            legalActions = getLegalActions();
+            legalActions = cur.getLegalActions();
             //System.out.println("legal actions: " + legalActions.size());
             for (Action a : legalActions) {
             //for every action of getLegalActions?
             //maybe call nextState for each of those actions?
-                next_state = nextState(a);
+                next_state = cur.nextState(a);
 
 
                 if (next_state != null) {
