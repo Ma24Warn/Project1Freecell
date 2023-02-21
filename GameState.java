@@ -155,6 +155,7 @@ public class GameState
         }
         else {
             pile = tableau.get(d-1);
+            if (pile.size() == 0) { return true; }
             //IF STATEMENT FROM ME --------------------------------------------------------------------
             if (pile.size() > 0) {
                 Card last = pile.get(pile.size()-1);
@@ -180,9 +181,9 @@ public class GameState
         }
         
         // Moves to tableau
+        boolean foundEmpty = false;
         for (int d = 0; d < 8; d++) {
             ArrayList<Card> pile = tableau.get(d);
-            
             // non-empty pile - check all movable cards to see if they can go here.
             if (pile.size() > 0) {
                 Card top = pile.get(pile.size() - 1);
@@ -195,25 +196,26 @@ public class GameState
                 for (int s = 0; s < 8; s++) {
                     if (s == d) { continue; }
                     ArrayList<Card> p2 = tableau.get(s);
-                    //IF STATEMENT FROM ME prevents moving from tableau with no cards -----------------------
-                    if (p2.size() > 0) {
-                        Card c2 = p2.get(p2.size()-1);
-                        if (!top.sameColor(c2) && (top.getRank() == c2.getRank()+1)) {
-                            result.add(new Action(false,s+1,c2,d+1));
-                        }    
-                    }                
+                    if (p2.size() == 0) { continue; }
+                    Card c2 = p2.get(p2.size()-1);
+                    if (!top.sameColor(c2) && (top.getRank() == c2.getRank()+1)) {
+                        result.add(new Action(false,s+1,c2,d+1));
+                    }                    
                 }
             }
             else {  // empty pile - any card can go here
-                for (int s = 0; s<cells.size(); s++) {
-                    result.add(new Action(true,s,cells.get(s),d+1));
-                }
-                for (int s = 0; s < 8; s++) {
-                    if (s == d) { continue; }
-                    ArrayList<Card> p2 = tableau.get(s);
-                    //IF STATEMENT FROM ME ------------------is this preventing moving from empty to empty??????-----------
-                    if (p2.size() > 0) {
-                        result.add(new Action(false,s+1,p2.get(p2.size()-1),d+1));
+                if (!foundEmpty) {
+                    foundEmpty = true;
+                    for (int s = 0; s<cells.size(); s++) {
+                        result.add(new Action(true,s,cells.get(s),d+1));
+                    }
+                    for (int s = 0; s < 8; s++) {
+                        if (s == d) { continue; }
+                        ArrayList<Card> p2 = tableau.get(s);
+                        // No point in moving a single card from one tableau pile to an empty space
+                        if (p2.size() >= 2) {
+                            result.add(new Action(false,s+1,p2.get(p2.size()-1),d+1));
+                        }
                     }
                 }
             }
@@ -245,13 +247,12 @@ public class GameState
         GameState result = new GameState(this);
         if (!result.executeAction(a)) { return null; }
 
-        //System.out.println(a);
-        //System.out.println(actions);
-        //IMPLEMENT ACTION ARRAYLIST
-        //result.executeAction(a);
 
+        actions.add(a);
+        //this.actions.add(a); //-------------------------------------------------------------------------------------------
+        //result.actions.add(a);
+        //System.out.println("ACTIONS !: " + actions);
 
-        actions.add(a); //IS THIS CORRECT??????????????????????????????????????????????????????????
 
         return result;
     }
@@ -261,12 +262,12 @@ public class GameState
         GameState result = new GameState(this);
         for (Action a : Alist) {
             if (!result.executeAction(a)) { return null; }
-            //actions.add(a); //IS THIS CORRECT?????
+            //actions.add(a);
         }
 
 
 
-        //IMPLEMENT ACTION ARRAYLIST???????????????????????????????????????????????????????????????
+        //---------------------------------------------------------------------------------------------------------------
 
 
         return result;
@@ -452,24 +453,17 @@ public class GameState
             cur = PQ.get(PQ.firstKey()).get(0);
             PQ.get(PQ.firstKey()).remove(0);
 
-
-
-            //cur = PQ.get(PQ.firstKey());
-
-            //THE INTSTRUCTIONS/PSEUDOCODE DID SAY TO POP OFF THE VALUE!!!
-            //PQ.remove(PQ.firstKey());
-
             System.out.println("Current state: " + cur);
 
             if (cur.isWin()) {
+                //return cur.actions;
                 return actions;
             }
             ArrayList<Action> legalActions = new ArrayList<>();
             legalActions = cur.getLegalActions();
-            //System.out.println("legal actions: " + legalActions.size());
+
             for (Action a : legalActions) {
-            //for every action of getLegalActions?
-            //maybe call nextState for each of those actions?
+
                 next_state = cur.nextState(a);
 
 
@@ -479,7 +473,10 @@ public class GameState
                     System.out.println("heuristic " + h(next_state));
                     System.out.println("");
 
+                    //this needs to be the actions arraylist for the right state, not every move tried so far
                     numMoves = actions.size() + h(next_state);
+                    //numMoves = cur.actions.size() + h(next_state);
+
 
                     if (!PQ.containsKey(numMoves)) {
                         ArrayList<GameState> newAL = new ArrayList<>();
@@ -492,24 +489,13 @@ public class GameState
                     
                 }
                 
-                //System.out.println("PQ = " + PQ);
-
-
             }
             System.out.println("legal actions from above: " + legalActions);
             System.out.println("actions taken so far: " + actions);
             
-            /* 
-            if (actions.size() > 6) {
-                System.out.println(actions);
-                break;
-            }*/
-
-
-            
             
         }
-        //in theory, this will only return if the if(isWin()) never passes and returns
+
         return empty;
 
         //or do i return empty when there are no legal actions left in the second part of the A*???
