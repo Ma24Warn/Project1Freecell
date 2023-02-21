@@ -45,14 +45,16 @@ public class FreeCell
         GameState game4 = new GameState("testCases/case_MS25_102.txt");
 
         GameState game5 = new GameState("testCases/case_onemove.txt");
-        GameState game6 = new GameState("testCases/testtest.txt");
-        GameState game7 = new GameState("testCases/testtest2.txt");
-        GameState game8 = new GameState("testCases/testtest3.txt");
+
+        GameState game6 = new GameState("testCases/testSmall.txt");
+        GameState game7 = new GameState("testCases/testMedium.txt");
+        GameState game8 = new GameState("testCases/testLarge.txt");
+        GameState game9 = new GameState("testCases/testMassive.txt");
 
         GameState randomGame = new GameState();
 
         //m = solve(randomGame);
-        m = solve(game1);
+        m = solve(game7);
 
         System.out.println("Solution: ");
         System.out.println(m.toString());
@@ -67,7 +69,7 @@ public class FreeCell
     public static ArrayList<Action> solve(GameState gs) {
         ArrayList<Action> moves = new ArrayList<>();
 
-        moves = gs.aStarSearch(gs);
+        moves = GameState.aStarSearch(gs);
 
         //I THINK THE A* WILL SEND ME THE ARRAYLIST? I JUST RETURN THAT AGAIN?
 

@@ -20,8 +20,8 @@ public class GameState
     private int numCellsFree;
     private ArrayList<ArrayList<Card>> tableau; // In actions, numbered 1-8; we adjust the -1 manually.
     private int[] foundations = {0,0,0,0,0}; // We'll ignore the first one.
-    private ArrayList<Action> actions = new ArrayList<>(); //ArrayList to keep track of actions
-    private TreeMap<Integer, ArrayList<GameState>> PQ = new TreeMap<Integer, ArrayList<GameState>>();
+    private ArrayList<Action> actions = new ArrayList<Action>(); //ArrayList to keep track of actions
+    private static TreeMap<Integer, ArrayList<GameState>> PQ = new TreeMap<Integer, ArrayList<GameState>>();
 
     /**
      * Creates a random deal
@@ -369,8 +369,8 @@ public class GameState
 
 
     //heuristic
-    public int h(GameState gs) {
-        int heuristic = 0, count = 0, fSize = 0, rank;
+    public static int h(GameState gs) {
+        int heuristic = 0, count = 0, fSize = 0, rank = 0;
         ArrayList<Card> curTab;
         Card curCard;
         boolean found;
@@ -435,9 +435,9 @@ public class GameState
 
 
     //A* Search Algorithm
-    public ArrayList<Action> aStarSearch(GameState gs) {
-        ArrayList<Action> empty = new ArrayList<>();
-        ArrayList<GameState> startState = new ArrayList<>();
+    public static ArrayList<Action> aStarSearch(GameState gs) {
+        ArrayList<Action> empty = new ArrayList<Action>();
+        ArrayList<GameState> startState = new ArrayList<GameState>();
         GameState cur, next_state;
         int numMoves; //Holds the value of djikstras + heuristic (to keep code simpler)
 
@@ -454,7 +454,7 @@ public class GameState
             System.out.println("---------------------------------------------------------------------");
 
             //if the firstkey list is empty, remove it
-            if (PQ.get(PQ.firstKey()).size() < 1) {
+            while (PQ.get(PQ.firstKey()).size() < 1) {
                 PQ.remove(PQ.firstKey());
             }
 
@@ -468,8 +468,7 @@ public class GameState
                 //return cur.actions;
                 return cur.actions;
             }
-            ArrayList<Action> legalActions = new ArrayList<>();
-            legalActions = cur.getLegalActions();
+            ArrayList<Action> legalActions = cur.getLegalActions();
 
             for (Action a : legalActions) {
 
@@ -479,14 +478,14 @@ public class GameState
 
 
                 if (next_state != null) {
-                    System.out.println("action " + a);
-                    System.out.println("next state: " + next_state);
+                    //System.out.println("action " + a);
+                    //System.out.println("next state: " + next_state);
                     System.out.println("heuristic " + h(next_state));
-                    System.out.println("");
+                    //System.out.println("");
                     
 
                     //this needs to be the actions arraylist for the right state, not every move tried so far
-                    numMoves = cur.actions.size() + h(next_state);
+                    numMoves = next_state.actions.size() + h(next_state) + 1;
 
 
                     
