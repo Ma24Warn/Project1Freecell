@@ -46,8 +46,12 @@ public class FreeCell
 
         GameState game5 = new GameState("testCases/case_onemove.txt");
         GameState game6 = new GameState("testCases/testtest.txt");
+        GameState game7 = new GameState("testCases/testtest2.txt");
+        GameState game8 = new GameState("testCases/testtest3.txt");
 
+        GameState randomGame = new GameState();
 
+        //m = solve(randomGame);
         m = solve(game1);
 
         System.out.println("Solution: ");

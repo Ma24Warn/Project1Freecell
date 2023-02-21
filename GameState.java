@@ -376,31 +376,34 @@ public class GameState
         boolean found;
 
 
-        for (int z = 0; z < foundations.length; z++) {
+        for (int z = 1; z <= 4; z++) {
             //calculate foundation size heuristic? 52-fHeur
 
-            rank = gs.foundations[z];
-            fSize += rank; //used to calculate part of heuristic (amount of cards left to put in foundations)
+            rank = gs.foundations[z] + 1;
+            //System.out.println("GAMESTATE FOUNDATION RANK " + rank);
+            fSize += gs.foundations[z]; //used to calculate part of heuristic (amount of cards left to put in foundations)
             found = false;
-
+            
             //go through each tableau
             for (int x = 0; x < 8; x++) {
 
                 //get an ArrayList of the current tableau's cards
                 curTab = gs.tableau.get(x);
-
                 
                 //find the card in the current tableau
                 for (int y = 0; y < curTab.size(); y++) {
 
+                    //System.out.println("Size of current tableau " + curTab.size());
+
                     //get the rank and suit of current card in tableau
                     curCard = curTab.get(y);
+                    //System.out.println("curCard " + curCard);
+
 
                     //if the current cards rank and suit are equal to the card we are looking for
                     if (curCard.getRank() == rank && curCard.getSuit() == z) {
-
                         //get amount of cards remaining (on top of current card) CHECK IF THIS WORKS!!!!!!!!!!!!
-                        count = curTab.size() - y;
+                        count = curTab.size() - (y + 1);
                         heuristic += count;
                         found = true;
                         break;
@@ -421,9 +424,11 @@ public class GameState
         }
 
         //add amount of cards left which need to be added to foundation
+
+
         heuristic += 52-fSize;
         //heuristic += 4-gs.numCellsFree; //SHOULD THIS BE A PART OF THE HEURISTIC????????????????????????????
-
+        
         return heuristic;
     }
 
@@ -435,7 +440,7 @@ public class GameState
         ArrayList<GameState> startState = new ArrayList<>();
         GameState cur, next_state;
         int numMoves; //Holds the value of djikstras + heuristic (to keep code simpler)
-        
+
         System.out.println("start state: " + gs);
         startState.add(gs);
 
@@ -446,6 +451,8 @@ public class GameState
         System.out.println("size: " + PQ.size());
 
         while (!PQ.isEmpty()) {
+            System.out.println("---------------------------------------------------------------------");
+
             //if the firstkey list is empty, remove it
             if (PQ.get(PQ.firstKey()).size() < 1) {
                 PQ.remove(PQ.firstKey());
@@ -476,10 +483,13 @@ public class GameState
                     System.out.println("next state: " + next_state);
                     System.out.println("heuristic " + h(next_state));
                     System.out.println("");
+                    
 
                     //this needs to be the actions arraylist for the right state, not every move tried so far
-                    numMoves = next_state.actions.size() + h(next_state);
-                    //numMoves = cur.actions.size() + h(next_state);
+                    numMoves = cur.actions.size() + h(next_state);
+
+
+                    
 
 
                     if (!PQ.containsKey(numMoves)) {
