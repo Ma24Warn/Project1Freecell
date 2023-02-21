@@ -248,10 +248,13 @@ public class GameState
         if (!result.executeAction(a)) { return null; }
 
 
-        actions.add(a);
+        //actions.add(a);
         //this.actions.add(a); //-------------------------------------------------------------------------------------------
-        //result.actions.add(a);
-        //System.out.println("ACTIONS !: " + actions);
+        result.actions.addAll(this.actions);
+        result.actions.add(a);
+        
+        
+        //System.out.println("ACTIONS !: " + result.actions);
 
 
         return result;
@@ -443,7 +446,6 @@ public class GameState
         System.out.println("size: " + PQ.size());
 
         while (!PQ.isEmpty()) {
-
             //if the firstkey list is empty, remove it
             if (PQ.get(PQ.firstKey()).size() < 1) {
                 PQ.remove(PQ.firstKey());
@@ -453,11 +455,11 @@ public class GameState
             cur = PQ.get(PQ.firstKey()).get(0);
             PQ.get(PQ.firstKey()).remove(0);
 
-            System.out.println("Current state: " + cur);
+            //System.out.println("Current state: " + cur);
 
             if (cur.isWin()) {
                 //return cur.actions;
-                return actions;
+                return cur.actions;
             }
             ArrayList<Action> legalActions = new ArrayList<>();
             legalActions = cur.getLegalActions();
@@ -465,6 +467,8 @@ public class GameState
             for (Action a : legalActions) {
 
                 next_state = cur.nextState(a);
+                //System.out.println("RETURNED ACTIONS " + next_state.actions); 
+                //THIS RETURNS THE CORRECT THING
 
 
                 if (next_state != null) {
@@ -474,7 +478,7 @@ public class GameState
                     System.out.println("");
 
                     //this needs to be the actions arraylist for the right state, not every move tried so far
-                    numMoves = actions.size() + h(next_state);
+                    numMoves = next_state.actions.size() + h(next_state);
                     //numMoves = cur.actions.size() + h(next_state);
 
 
@@ -490,8 +494,8 @@ public class GameState
                 }
                 
             }
-            System.out.println("legal actions from above: " + legalActions);
-            System.out.println("actions taken so far: " + actions);
+            //System.out.println("legal actions from above: " + legalActions);
+            //ystem.out.println("actions taken so far: " + actions);
             
             
         }
