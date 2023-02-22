@@ -423,7 +423,8 @@ public class GameState
         }
 
 
-        heuristic += extraMoves;
+        heuristic = extraMoves;
+        //heuristic += extraMoves;
         heuristic += 52-fSize;
         
         return heuristic;
@@ -437,7 +438,7 @@ public class GameState
         ArrayList<Action> empty = new ArrayList<Action>();
         ArrayList<GameState> startState = new ArrayList<GameState>();
         GameState cur, next_state;
-        int numMoves; //Holds the value of djikstras + heuristic (to keep code simpler)
+        int numMoves, heur; //Holds the value of djikstras + heuristic (to keep code simpler)
 
         //System.out.println("start state: " + gs);
         startState.add(gs);
@@ -460,7 +461,8 @@ public class GameState
             cur = PQ.get(PQ.firstKey()).get(0);
             PQ.get(PQ.firstKey()).remove(0);
 
-            //System.out.println("Current state: " + cur);
+            System.out.println("Current state: " + cur);
+            System.out.println("");
 
             if (cur.isWin()) {
                 return cur.actions;
@@ -473,19 +475,24 @@ public class GameState
                 //System.out.println("RETURNED ACTIONS " + next_state.actions); 
                 //THIS RETURNS THE CORRECT THING
 
-
+                    heur = h(next_state);
                 
-                    //System.out.println("action " + a);
-                    //System.out.println("next state: " + next_state);
-                    //System.out.println("heuristic " + h(next_state));
-                    //System.out.println("");
-                    
+                    /* 
+                    System.out.println("action " + a);
+                    System.out.println("next state: " + next_state);
+                    System.out.println("heuristic " + heur);
+                    System.out.println("");
+                    //*/
 
                     //this needs to be the actions arraylist for the right state, not every move tried so far
-                numMoves = next_state.actions.size() + h(next_state) + 1;
+                numMoves = next_state.actions.size() + heur + 1;
+
+                
 
 
                 if (!PQ.containsKey(numMoves)) {
+                    //System.out.println("ADDED TO PQ");
+                    //System.out.println("");
                     ArrayList<GameState> newAL = new ArrayList<GameState>();
                     newAL.add(next_state);
                     PQ.put(numMoves, newAL);
@@ -497,6 +504,7 @@ public class GameState
                 
                 
             }
+            //System.out.println("PQ SIZE: " + PQ.size());
 
         }
 
