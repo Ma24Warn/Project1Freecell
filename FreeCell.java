@@ -38,6 +38,8 @@ public class FreeCell
         }
         */
 
+        double startTime = System.currentTimeMillis();
+
         GameState game1 = new GameState("testCases/case_small_4.txt");
 
         GameState game2 = new GameState("testCases/case_easy_56.txt");
@@ -51,13 +53,22 @@ public class FreeCell
         GameState game8 = new GameState("testCases/testLarge.txt");
         GameState game9 = new GameState("testCases/testMassive.txt");
 
+
+        GameState game10 = new GameState("testCases/testtest4.txt");
+        GameState game11 = new GameState("testCases/testtest5.txt");
+        GameState game12 = new GameState("testCases/testtest6.txt");
+        GameState game13 = new GameState("testCases/testtest7.txt");
         GameState randomGame = new GameState();
 
         //m = solve(randomGame);
-        m = solve(game7);
+        m = solve(game1);
 
         System.out.println("Solution: ");
         System.out.println(m.toString());
+
+        double endTime = System.currentTimeMillis();
+
+        System.out.println("Total time taken: " + (endTime - startTime)/1000 + " seconds");
 
 
         //THIS NEEDS TO CALL THE BELOW METHOD AND PRINT IT I THINK. WHAT DOES ABOVE DO?

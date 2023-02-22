@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.io.File;
 import java.util.Scanner;
@@ -21,7 +22,8 @@ public class GameState
     private ArrayList<ArrayList<Card>> tableau; // In actions, numbered 1-8; we adjust the -1 manually.
     private int[] foundations = {0,0,0,0,0}; // We'll ignore the first one.
     private ArrayList<Action> actions = new ArrayList<Action>(); //ArrayList to keep track of actions
-    private static TreeMap<Integer, ArrayList<GameState>> PQ = new TreeMap<Integer, ArrayList<GameState>>();
+    
+
 
     /**
      * Creates a random deal
@@ -248,8 +250,7 @@ public class GameState
         if (!result.executeAction(a)) { return null; }
 
 
-        //actions.add(a);
-        //this.actions.add(a); //-------------------------------------------------------------------------------------------
+        //-----------------------------------------------------------------------------------------------------
         result.actions.addAll(this.actions);
         result.actions.add(a);
         
@@ -370,64 +371,60 @@ public class GameState
 
     //heuristic
     public static int h(GameState gs) {
-        int heuristic = 0, count = 0, fSize = 0, rank = 0;
+        int heuristic = 0, fSize = 0, extraMoves = 0;
         ArrayList<Card> curTab;
         Card curCard;
-        boolean found;
+        int[] lastSeen = {0, 0, 0, 0, 0};
 
 
+        //gets the total amount of cards in the foundations
         for (int z = 1; z <= 4; z++) {
-            //calculate foundation size heuristic? 52-fHeur
+            fSize += gs.foundations[z];
+        }
 
-            rank = gs.foundations[z] + 1;
-            //System.out.println("GAMESTATE FOUNDATION RANK " + rank);
-            fSize += gs.foundations[z]; //used to calculate part of heuristic (amount of cards left to put in foundations)
-            found = false;
-            
-            //go through each tableau
-            for (int x = 0; x < 8; x++) {
+        
+        //go through each tableau
+        for (int x = 0; x < 8; x++) {
 
-                //get an ArrayList of the current tableau's cards
-                curTab = gs.tableau.get(x);
                 
-                //find the card in the current tableau
-                for (int y = 0; y < curTab.size(); y++) {
+            //reset lastSeen array to default 0 values
+            for (int i = 1; i < lastSeen.length; i++) {
+                lastSeen[i] = 0;
+                
+            }
+            //System.out.println("LastSeen Array: " + Arrays.toString(lastSeen));
 
-                    //System.out.println("Size of current tableau " + curTab.size());
+            //get an ArrayList of the current tableau's cards
+            curTab = gs.tableau.get(x);
+            
+            //find the card in the current tableau
+            for (int y = curTab.size()-1; y >= 0; y--) {
+                
 
-                    //get the rank and suit of current card in tableau
-                    curCard = curTab.get(y);
-                    //System.out.println("curCard " + curCard);
-
-
-                    //if the current cards rank and suit are equal to the card we are looking for
-                    if (curCard.getRank() == rank && curCard.getSuit() == z) {
-                        //get amount of cards remaining (on top of current card) CHECK IF THIS WORKS!!!!!!!!!!!!
-                        count = curTab.size() - (y + 1);
-                        heuristic += count;
-                        found = true;
-                        break;
-                    }
+                curCard = curTab.get(y);
 
 
-
-                    
+                //This is just for the first time seeing a card of each suit so that it doesn't count an extra move
+                if (lastSeen[curCard.getSuit()] == 0) {
+                    lastSeen[curCard.getSuit()] = curCard.getRank();
                 }
 
-                //if current foundations next card has been found, break from tableau loop
-                if (found == true) {
-                    break;
+
+                //if the current cards rank is lower than the last seen card of its respective suit
+                if (curCard.getRank() < lastSeen[curCard.getSuit()]) {
+
+                    lastSeen[curCard.getSuit()] = curCard.getRank();
+                    extraMoves++;
+                    
                 }
 
             }
 
         }
 
-        //add amount of cards left which need to be added to foundation
 
-
+        heuristic += extraMoves;
         heuristic += 52-fSize;
-        //heuristic += 4-gs.numCellsFree; //SHOULD THIS BE A PART OF THE HEURISTIC????????????????????????????
         
         return heuristic;
     }
@@ -436,24 +433,25 @@ public class GameState
 
     //A* Search Algorithm
     public static ArrayList<Action> aStarSearch(GameState gs) {
+        TreeMap<Integer, ArrayList<GameState>> PQ = new TreeMap<Integer, ArrayList<GameState>>();
         ArrayList<Action> empty = new ArrayList<Action>();
         ArrayList<GameState> startState = new ArrayList<GameState>();
         GameState cur, next_state;
         int numMoves; //Holds the value of djikstras + heuristic (to keep code simpler)
 
-        System.out.println("start state: " + gs);
+        //System.out.println("start state: " + gs);
         startState.add(gs);
 
         PQ.put(h(gs), startState);
 
         
 
-        System.out.println("size: " + PQ.size());
+        //System.out.println("size: " + PQ.size());
 
         while (!PQ.isEmpty()) {
-            System.out.println("---------------------------------------------------------------------");
+            //System.out.println("---------------------------------------------------------------------");
 
-            //if the firstkey list is empty, remove it
+            //while the firstkey list is empty, remove it
             while (PQ.get(PQ.firstKey()).size() < 1) {
                 PQ.remove(PQ.firstKey());
             }
@@ -465,7 +463,6 @@ public class GameState
             //System.out.println("Current state: " + cur);
 
             if (cur.isWin()) {
-                //return cur.actions;
                 return cur.actions;
             }
             ArrayList<Action> legalActions = cur.getLegalActions();
@@ -477,42 +474,33 @@ public class GameState
                 //THIS RETURNS THE CORRECT THING
 
 
-                if (next_state != null) {
+                
                     //System.out.println("action " + a);
                     //System.out.println("next state: " + next_state);
-                    System.out.println("heuristic " + h(next_state));
+                    //System.out.println("heuristic " + h(next_state));
                     //System.out.println("");
                     
 
                     //this needs to be the actions arraylist for the right state, not every move tried so far
-                    numMoves = next_state.actions.size() + h(next_state) + 1;
+                numMoves = next_state.actions.size() + h(next_state) + 1;
 
 
-                    
-
-
-                    if (!PQ.containsKey(numMoves)) {
-                        ArrayList<GameState> newAL = new ArrayList<>();
-                        newAL.add(next_state);
-                        PQ.put(numMoves, newAL);
-                    }
-                    else {
-                        PQ.get(numMoves).add(next_state);
-                    }
-                    
+                if (!PQ.containsKey(numMoves)) {
+                    ArrayList<GameState> newAL = new ArrayList<GameState>();
+                    newAL.add(next_state);
+                    PQ.put(numMoves, newAL);
                 }
+                else {
+                    PQ.get(numMoves).add(next_state);
+                }
+                    
+                
                 
             }
-            //System.out.println("legal actions from above: " + legalActions);
-            //ystem.out.println("actions taken so far: " + actions);
-            
-            
+
         }
 
         return empty;
-
-        //or do i return empty when there are no legal actions left in the second part of the A*???
-        
         
     }
 
