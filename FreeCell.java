@@ -61,7 +61,7 @@ public class FreeCell
         GameState randomGame = new GameState();
 
         //m = solve(randomGame);
-        m = solve(game10);
+        m = solve(game4);
 
         System.out.println("Solution: ");
         System.out.println(m.toString());
