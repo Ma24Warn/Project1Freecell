@@ -10,10 +10,12 @@ import java.io.FileWriter;
 
 /**
  * Contains the state of a FreeCell game
- *
- * @author Dan DiTursi
- * @version 11 February 2023
+ *  
+ * @author Matthew Warner
+ * @version 23 February 2023
+ * 
  */
+
 public class GameState
 {
     // instance variables - replace the example below with your own
@@ -22,6 +24,7 @@ public class GameState
     private ArrayList<ArrayList<Card>> tableau; // In actions, numbered 1-8; we adjust the -1 manually.
     private int[] foundations = {0,0,0,0,0}; // We'll ignore the first one.
     private ArrayList<Action> actions = new ArrayList<Action>(); //ArrayList to keep track of actions
+    private static ArrayList<String> visited = new ArrayList<String>(); //ArrayList to keep track of visited GameStates
     
 
 
@@ -141,9 +144,8 @@ public class GameState
         }
         else {
             pile = tableau.get(s-1);
-            //IF ELSE STATEMENT BY ME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if (pile.size() > 0) {
-                c = pile.get(pile.size()-1);//not by me!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                c = pile.get(pile.size()-1);
             }
             else {
                 return false;
@@ -158,13 +160,11 @@ public class GameState
         else {
             pile = tableau.get(d-1);
             if (pile.size() == 0) { return true; }
-            //IF STATEMENT FROM ME --------------------------------------------------------------------
             if (pile.size() > 0) {
                 Card last = pile.get(pile.size()-1);
                 return (last.getRank() == c.getRank() + 1) && (!last.sameColor(c));
             }
         }
-        //I UNCOMMENTED THIS OUT----------------------------------------------------------------------------
         return false;
     }
     
@@ -243,36 +243,27 @@ public class GameState
         return result;
     }
 
-    //Does this take an action and return what the next GameState will be? this updates the 
-    //current gamestate
+
     public GameState nextState(Action a) {
         GameState result = new GameState(this);
         if (!result.executeAction(a)) { return null; }
 
 
-        //-----------------------------------------------------------------------------------------------------
+        //adds previous actions + current actions to the resulting GameState's action arraylist
         result.actions.addAll(this.actions);
         result.actions.add(a);
         
-        
-        //System.out.println("ACTIONS !: " + result.actions);
-
 
         return result;
     }
-    
-    //this goes through the actions array and sees if it can get to the desired goal state
+
+
     public GameState resultState(ArrayList<Action> Alist) {
         GameState result = new GameState(this);
         for (Action a : Alist) {
             if (!result.executeAction(a)) { return null; }
-            //actions.add(a);
+            result.actions.add(a); //add all of the actions to the result GameState's actions arraylist
         }
-
-
-
-        //---------------------------------------------------------------------------------------------------------------
-
 
         return result;
     }
@@ -369,14 +360,14 @@ public class GameState
     }
 
 
-    //heuristic
+    //heuristic function
     public static int h(GameState gs) {
-        int heuristic = 0, fSize = 0, extraMoves = 0;
-        ArrayList<Card> curTab; // mainTab;
-        Card curCard; // mainCard;
-        int[] lastSeen = {0, 0, 0, 0, 0};
-        //GameState dupe = new GameState(gs);
-        //ArrayList<ArrayList<Card>> dupe = new ArrayList<>(gs.tableau);
+        //heuristic, amount of cards needed at foundation, and extra moves required by blocker cards
+        int heuristic = 0, fSize = 0, extraMoves = 0; 
+        ArrayList<Card> curTab; //holds the current tableau in the GameState
+        Card curCard; //holds the current card in the tableau
+        int[] lastSeen = {0, 0, 0, 0, 0}; //used to remember the last seen card of each suit for a tableau
+
 
 
         //gets the total amount of cards in the foundations
@@ -391,19 +382,16 @@ public class GameState
             //reset lastSeen array to default 0 values
             for (int i = 1; i < lastSeen.length; i++) {
                 lastSeen[i] = 0;
-                
             }
-            //System.out.println("LastSeen Array: " + Arrays.toString(lastSeen));
 
             //get an ArrayList of the current tableau's cards
             curTab = gs.tableau.get(x);
             
-            //find the card in the current tableau
+            //go through each card in the current tableau, starting at the end
             for (int y = curTab.size()-1; y >= 0; y--) {
                 
-
+                //get the current card
                 curCard = curTab.get(y);
-
 
                 //This is just for the first time seeing a card of each suit so that it doesn't count an extra move
                 if (lastSeen[curCard.getSuit()] == 0) {
@@ -414,8 +402,8 @@ public class GameState
                 //if the current cards rank is lower than the last seen card of its respective suit
                 if (curCard.getRank() < lastSeen[curCard.getSuit()]) {
 
-                    lastSeen[curCard.getSuit()] = curCard.getRank();
-                    extraMoves++;
+                    lastSeen[curCard.getSuit()] = curCard.getRank(); //update lastSeen array
+                    extraMoves++; //add an extra move
                     
                 }
 
@@ -423,9 +411,8 @@ public class GameState
 
         }
 
-        heuristic = extraMoves;
-        //heuristic += extraMoves;
-        heuristic += 52-fSize;
+        heuristic = extraMoves; //set heuristic equal to the amount of extra moves
+        heuristic += 52-fSize; //add the remaining number of cards needed at the tableau to the heuristic
         
         return heuristic;
     }
@@ -434,82 +421,71 @@ public class GameState
 
     //A* Search Algorithm
     public static ArrayList<Action> aStarSearch(GameState gs) {
+        //priority queue (uses arraylists of GameState to account for collision)
         TreeMap<Integer, ArrayList<GameState>> PQ = new TreeMap<Integer, ArrayList<GameState>>();
-        ArrayList<Action> empty = new ArrayList<Action>();
-        ArrayList<GameState> startState = new ArrayList<GameState>();
-        GameState cur, next_state;
+        ArrayList<Action> empty = new ArrayList<Action>(); //empty arraylist to return if solution is not found
+        ArrayList<GameState> startState = new ArrayList<GameState>(); //arraylist to hold the starting GameState
+        GameState cur, next_state; //GameState variables to hold the current GameState and next Gamestates
         int numMoves; //Holds the value of djikstras + heuristic (to keep code simpler)
 
-        //System.out.println("start state: " + gs);
+        //add the starting GameState to its arraylist and add that to the priority queue
         startState.add(gs);
-
         PQ.put(h(gs), startState);
 
-        
-
-        //System.out.println("size: " + PQ.size());
 
         while (!PQ.isEmpty()) {
-            //System.out.println("---------------------------------------------------------------------");
 
-            //while the firstkey list is empty, remove it
+            //while the arraylist at PQ's first key is empty, remove it from PQ (because an empty arraylist would stay despite being empty)
             while (PQ.get(PQ.firstKey()).size() < 1) {
                 PQ.remove(PQ.firstKey());
             }
 
-            //pop gamestate from arraylist in PQ
+            //pop gamestate from arraylist in PQ and store it in cur
             cur = PQ.get(PQ.firstKey()).get(0);
             PQ.get(PQ.firstKey()).remove(0);
 
-            System.out.println("Key " + PQ.firstKey());
-            System.out.println("Current state: " + cur);
-            System.out.println("Path to get here " + cur.actions);
-            System.out.println("");
+            //add the current GameState to the visited arraylist
+            visited.add(cur.toString());
 
+            //if the current GameState is a win, return its actions arraylist
             if (cur.isWin()) {
                 return cur.actions;
             }
-            ArrayList<Action> legalActions = cur.getLegalActions();
 
+            //get all of the current GameState's legal actions and go through each of them
+            ArrayList<Action> legalActions = cur.getLegalActions();
             for (Action a : legalActions) {
 
+                //get the next GameState using the current GameState and the first legal action
                 next_state = cur.nextState(a);
-                //System.out.println("RETURNED ACTIONS " + next_state.actions); 
-                //THIS RETURNS THE CORRECT THING
 
-                
-                
-                /* 
-                System.out.println("action " + a);
-                System.out.println("next state: " + next_state);
-                System.out.println("heuristic " + heur);
-                System.out.println("");
-                //*/
-
-                //this needs to be the actions arraylist for the right state, not every move tried so far
+                //set the number of moves to the size of next_state's actions arraylist + next_state's heuristic value
                 numMoves = next_state.actions.size() + h(next_state);;
 
-                
+                //if the visited arraylist does not already contain next_state's GameState value
+                if (!visited.contains(next_state.toString())) {
 
-
-                if (!PQ.containsKey(numMoves)) {
-                    //System.out.println("ADDED TO PQ");
-                    //System.out.println("");
-                    ArrayList<GameState> newAL = new ArrayList<GameState>();
-                    newAL.add(next_state);
-                    PQ.put(numMoves, newAL);
-                }
-                else {
-                    PQ.get(numMoves).add(0, next_state);
-                }
+                    //if PQ does not already contain a key for the current value of numMoves, create a new
+                    //arraylist, store next_state in it, and add that to PQ with the new key value
+                    if (!PQ.containsKey(numMoves)) {
+                        ArrayList<GameState> newAL = new ArrayList<GameState>();
+                        newAL.add(next_state);
+                        PQ.put(numMoves, newAL);
+                    }
+                    //else add the next_state to the beginning of the arraylist at the key
+                    //value equal to numMoves
+                    else {
+                        PQ.get(numMoves).add(0, next_state);
+                    }
                     
-                
+                }
                 
             }
-            //System.out.println("PQ SIZE: " + PQ.size());
+
 
         }
 
+        //if PQ eventually becomes empty and never returns a winning arraylist, then it will return this empty arraylist
         return empty;
         
     }
